@@ -25,8 +25,8 @@ Ikuti langkah-langkah berikut untuk menginstal dan menjalankan proyek ini di *lo
 ### 1. Clone Repository
 Buka terminal (Command Prompt / PowerShell / Git Bash) di folder server lokal Anda (misal `C:\laragon\www` atau `htdocs`), lalu jalankan perintah berikut:
 ```bash
-git clone https://github.com/USERNAME_GITHUB/Pos-System-warmindo.git
-cd Pos-System-warmindo
+git clone https://github.com/gatotsuj/Pos-Warmindo.git
+cd Pos-Warmindo
 ```
 *(Catatan: Pastikan Anda mengganti URL GitHub dengan URL repositori yang valid).*
 
