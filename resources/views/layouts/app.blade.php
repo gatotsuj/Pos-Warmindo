@@ -32,7 +32,7 @@
         $showTenantAdmin = $user->isAdmin() && (! $isSuperAdmin || $inTenantContext);
     @endphp
 
-    <div x-data="{ sidebarOpen: false }" class="min-h-screen flex">
+    <div x-data="{ sidebarOpen: false, desktopSidebarCollapsed: false }" class="min-h-screen flex overflow-x-hidden">
 
         {{-- Mobile sidebar overlay --}}
         <div
@@ -49,8 +49,11 @@
 
         {{-- Sidebar --}}
         <aside
-            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-            class="fixed inset-y-0 left-0 z-30 w-72 bg-white/80 backdrop-blur-xl border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transform transition-transform duration-300 ease-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col min-h-0 h-screen lg:h-auto lg:min-h-screen"
+            :class="[
+                sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+                desktopSidebarCollapsed ? 'lg:-ml-72' : 'lg:ml-0'
+            ]"
+            class="fixed inset-y-0 left-0 z-30 w-72 bg-white/80 backdrop-blur-xl border-r border-slate-200/60 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col min-h-0 h-screen lg:h-auto lg:min-h-screen"
         >
             {{-- Logo --}}
             <div class="flex-shrink-0 flex items-center justify-center h-20 bg-gradient-to-br from-indomie-red to-red-700 relative overflow-hidden">
@@ -218,10 +221,10 @@
             {{-- Top Navbar --}}
             <header class="bg-white/70 backdrop-blur-lg shadow-sm border-b border-slate-200/60 z-20 sticky top-0 transition-all duration-300">
                 <div class="flex items-center justify-between h-20 px-4 sm:px-6 lg:px-8">
-                    {{-- Mobile menu button --}}
+                    {{-- Sidebar toggle button --}}
                     <button
-                        @click="sidebarOpen = true"
-                        class="lg:hidden text-gray-500 hover:text-indomie-red focus:outline-none transition-colors"
+                        @click="sidebarOpen = !sidebarOpen; desktopSidebarCollapsed = !desktopSidebarCollapsed"
+                        class="text-gray-500 hover:text-indomie-red focus:outline-none transition-colors p-1 -ml-1 rounded-lg"
                     >
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
