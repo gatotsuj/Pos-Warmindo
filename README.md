@@ -96,8 +96,14 @@ Aplikasi akan berjalan di alamat `http://localhost:8000`.
 
 Setelah proses seeder berhasil dijalankan, Anda bisa masuk (Login) menggunakan data default administrator:
 
-*   **Email:** `admin@admin.com` 
+*   **Email:** `admin@pos.com` 
 *   **Password:** `password` 
+
+*   **Email:** `cashier@pos.com` 
+*   **Password:** `password`
+
+*   **Email:** `superadmin@pos.com`
+*   **Password:** `password`    
 
 *(Anda bisa mengubah kredensial ini nanti di pengaturan profil atau dengan mengedit seeder `database/seeders/AdminUserSeeder.php`)*.
 
