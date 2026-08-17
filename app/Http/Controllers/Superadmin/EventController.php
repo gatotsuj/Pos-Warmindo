@@ -4,19 +4,23 @@ namespace App\Http\Controllers\Superadmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Repositories\Contracts\EventRepositoryInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class EventController extends Controller
 {
+    protected EventRepositoryInterface $eventRepo;
+
+    public function __construct(EventRepositoryInterface $eventRepo)
+    {
+        $this->eventRepo = $eventRepo;
+    }
+
     public function index(): View
     {
-        $events = Event::query()
-            ->withCount('tenants')
-            ->orderByDesc('starts_at')
-            ->orderBy('name')
-            ->paginate(15);
+        $events = $this->eventRepo->paginateWithTenantsCount(15);
 
         return view('superadmin.events.index', compact('events'));
     }
@@ -36,7 +40,7 @@ class EventController extends Controller
             'is_active' => ['boolean'],
         ]);
 
-        Event::create([
+        $this->eventRepo->create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'starts_at' => $validated['starts_at'] ?? null,
@@ -64,7 +68,7 @@ class EventController extends Controller
             'is_active' => ['boolean'],
         ]);
 
-        $event->update([
+        $this->eventRepo->update($event, [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'starts_at' => $validated['starts_at'] ?? null,
@@ -79,13 +83,13 @@ class EventController extends Controller
 
     public function destroy(Event $event): RedirectResponse
     {
-        if ($event->tenants()->exists()) {
+        if ($this->eventRepo->hasTenants($event)) {
             return redirect()
                 ->route('superadmin.events.index')
                 ->with('error', 'Acara masih memiliki tenant. Pindahkan tenant ke acara lain terlebih dahulu.');
         }
 
-        $event->delete();
+        $this->eventRepo->delete($event);
 
         return redirect()
             ->route('superadmin.events.index')

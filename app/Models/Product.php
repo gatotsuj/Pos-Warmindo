@@ -22,15 +22,18 @@ class Product extends Model
         'sku',
         'description',
         'price',
+        'cost_price',
         'stock',
+        'unit',
         'image',
         'is_active',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'stock' => 'integer',
-        'is_active' => 'boolean',
+        'price'      => 'decimal:2',
+        'cost_price' => 'decimal:2',
+        'stock'      => 'integer',
+        'is_active'  => 'boolean',
     ];
 
     // ==================== RELATIONSHIPS ====================

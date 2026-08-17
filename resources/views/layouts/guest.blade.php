@@ -28,7 +28,7 @@
             <div class="mb-8 text-center">
                 <a href="/" class="inline-flex flex-col items-center gap-3 group">
                     <div class="w-20 h-20 bg-indomie-red text-white flex items-center justify-center rounded-2xl shadow-xl shadow-indomie-red/20 transform -rotate-3 group-hover:rotate-0 transition-transform duration-300 ease-out">
-                        <span class="text-3xl">🍜</span>
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     </div>
                     <span class="text-3xl font-black tracking-tight text-gray-800">WARMINDO<span class="text-indomie-red">POS</span></span>
                 </a>

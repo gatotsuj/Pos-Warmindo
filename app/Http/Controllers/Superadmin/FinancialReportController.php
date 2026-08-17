@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Superadmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Event;
 use App\Models\Tenant;
-use App\Models\Transaction;
+use App\Repositories\Contracts\EventRepositoryInterface;
+use App\Repositories\Contracts\TenantRepositoryInterface;
+use App\Repositories\Contracts\TransactionRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,33 +14,34 @@ use Illuminate\View\View;
 
 class FinancialReportController extends Controller
 {
+    protected TenantRepositoryInterface $tenantRepo;
+    protected EventRepositoryInterface $eventRepo;
+    protected TransactionRepositoryInterface $transactionRepo;
+
+    public function __construct(
+        TenantRepositoryInterface $tenantRepo,
+        EventRepositoryInterface $eventRepo,
+        TransactionRepositoryInterface $transactionRepo
+    ) {
+        $this->tenantRepo = $tenantRepo;
+        $this->eventRepo = $eventRepo;
+        $this->transactionRepo = $transactionRepo;
+    }
+
     public function index(Request $request): View
     {
         $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->input('date_to', now()->format('Y-m-d'));
 
-        $events = Event::query()->orderByDesc('starts_at')->orderBy('name')->get();
+        $events = $this->eventRepo->allOrderedByStartsAtAndName();
 
-        $tenantBaseQuery = Tenant::query()
-            ->with('event')
-            ->withCount('users')
-            ->when($request->filled('event_id'), fn ($q) => $q->where('event_id', $request->integer('event_id')))
-            ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->search.'%'));
-
-        $tenantIds = (clone $tenantBaseQuery)->pluck('id');
+        $tenantIds = $this->tenantRepo->getFilteredTenantIds($request->all());
 
         $stats = collect();
         $grandTotals = ['revenue' => 0, 'transactions' => 0];
 
         if ($tenantIds->isNotEmpty()) {
-            $stats = Transaction::query()
-                ->whereIn('tenant_id', $tenantIds)
-                ->whereDate('created_at', '>=', $dateFrom)
-                ->whereDate('created_at', '<=', $dateTo)
-                ->selectRaw('tenant_id, COUNT(*) as transaction_count, COALESCE(SUM(grand_total), 0) as total_revenue')
-                ->groupBy('tenant_id')
-                ->get()
-                ->keyBy('tenant_id');
+            $stats = $this->transactionRepo->getTenantsFinancialSummary($tenantIds, $dateFrom, $dateTo);
 
             $grandTotals = [
                 'revenue' => (int) $stats->sum('total_revenue'),
@@ -47,7 +49,7 @@ class FinancialReportController extends Controller
             ];
         }
 
-        $tenants = $tenantBaseQuery->orderBy('name')->paginate(20)->withQueryString();
+        $tenants = $this->tenantRepo->paginateFiltered($request->all(), 20)->withQueryString();
 
         return view('superadmin.financial.index', compact(
             'tenants',
@@ -69,45 +71,31 @@ class FinancialReportController extends Controller
             $monthInput = $month->format('Y-m');
         }
 
-        $base = Transaction::query()->where('tenant_id', $tenant->id);
+        $summary = $this->transactionRepo->getTenantFinancialSummaryForMonth(
+            $tenant->id,
+            $month->year,
+            $month->month
+        );
 
-        $summaryRow = (clone $base)
-            ->whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->selectRaw('COUNT(*) as transaction_count, COALESCE(SUM(grand_total), 0) as total_revenue')
-            ->first();
+        $byPayment = $this->transactionRepo->getTenantPaymentBreakdownForMonth(
+            $tenant->id,
+            $month->year,
+            $month->month
+        );
 
-        $summary = (object) [
-            'transaction_count' => (int) ($summaryRow->transaction_count ?? 0),
-            'total_revenue' => (float) ($summaryRow->total_revenue ?? 0),
-        ];
+        $daily = $this->transactionRepo->getTenantDailyFinancialsForMonth(
+            $tenant->id,
+            $month->year,
+            $month->month,
+            DB::getDriverName()
+        );
 
-        $byPayment = (clone $base)
-            ->whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->select('payment_method', DB::raw('COUNT(*) as cnt'), DB::raw('SUM(grand_total) as total'))
-            ->groupBy('payment_method')
-            ->get();
-
-        $dayExpr = DB::getDriverName() === 'sqlite'
-            ? 'date(created_at)'
-            : 'DATE(created_at)';
-
-        $daily = (clone $base)
-            ->whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->selectRaw("{$dayExpr} as day, COUNT(*) as cnt, COALESCE(SUM(grand_total), 0) as revenue")
-            ->groupByRaw($dayExpr)
-            ->orderBy('day')
-            ->get();
-
-        $transactions = (clone $base)
-            ->whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->with('user')
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+        $transactions = $this->transactionRepo->getTenantTransactionsForMonth(
+            $tenant->id,
+            $month->year,
+            $month->month,
+            15
+        )->withQueryString();
 
         $tenant->load('event');
 

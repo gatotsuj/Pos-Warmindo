@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use App\Support\CurrentTenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -11,6 +12,13 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
+    protected UserRepositoryInterface $userRepo;
+
+    public function __construct(UserRepositoryInterface $userRepo)
+    {
+        $this->userRepo = $userRepo;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -19,21 +27,11 @@ class UserController extends Controller
         $search = $request->get('search', '');
         $roleFilter = $request->get('role', '');
 
-        $users = User::query()
-            ->where('tenant_id', CurrentTenant::id())
-            ->where('role', '!=', User::ROLE_SUPERADMIN)
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%");
-                });
-            })
-            ->when($roleFilter, function ($query, $roleFilter) {
-                $query->where('role', $roleFilter);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+        $users = $this->userRepo->paginateTenantUsers(
+            CurrentTenant::id(),
+            ['search' => $search, 'role' => $roleFilter],
+            10
+        )->withQueryString();
 
         return view('admin.user.index', compact('users', 'search', 'roleFilter'));
     }
@@ -61,7 +59,7 @@ class UserController extends Controller
         $validated['password'] = Hash::make($validated['password']);
         $validated['tenant_id'] = CurrentTenant::id();
 
-        User::create($validated);
+        $this->userRepo->create($validated);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User created successfully.');
@@ -102,7 +100,7 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        $this->userRepo->update($user, $validated);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User updated successfully.');
@@ -120,7 +118,7 @@ class UserController extends Controller
                 ->with('error', 'You cannot delete your own account.');
         }
 
-        $user->delete();
+        $this->userRepo->delete($user);
 
         return redirect()->route('admin.users.index')
             ->with('success', 'User deleted successfully.');
@@ -128,7 +126,7 @@ class UserController extends Controller
 
     private function ensureTenantUser(User $user): void
     {
-        if ($user->isSuperAdmin() || (int) $user->tenant_id !== CurrentTenant::id()) {
+        if (!$this->userRepo->isTenantUser($user, CurrentTenant::id())) {
             abort(403);
         }
     }

@@ -14,18 +14,7 @@
                 @csrf
                 @method('PUT')
 
-                <div class="mb-6">
-                    <label for="event_id" class="block text-sm font-medium text-slate-700 mb-2">Acara <span class="text-red-500">*</span></label>
-                    <select id="event_id" name="event_id" required
-                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 @error('event_id') border-red-300 @enderror">
-                        @foreach ($events as $ev)
-                            <option value="{{ $ev->id }}" @selected(old('event_id', $tenant->event_id) == $ev->id)>{{ $ev->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('event_id')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+                <input type="hidden" name="event_id" value="{{ old('event_id', $tenant->event_id) }}">
 
                 <div class="mb-6">
                     <label for="name" class="block text-sm font-medium text-slate-700 mb-2">Nama <span class="text-red-500">*</span></label>

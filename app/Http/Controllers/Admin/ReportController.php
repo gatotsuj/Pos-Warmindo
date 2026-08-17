@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Exports\DailyTransactionExport;
 use App\Exports\MonthlyTransactionExport;
 use App\Http\Controllers\Controller;
-use App\Models\Transaction;
+use App\Repositories\Contracts\TransactionRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Excel;
@@ -13,11 +13,13 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ReportController extends Controller
 {
-    protected $excel;
+    protected Excel $excel;
+    protected TransactionRepositoryInterface $transactionRepo;
 
-    public function __construct(Excel $excel)
+    public function __construct(Excel $excel, TransactionRepositoryInterface $transactionRepo)
     {
         $this->excel = $excel;
+        $this->transactionRepo = $transactionRepo;
     }
 
     public function index()
@@ -25,14 +27,8 @@ class ReportController extends Controller
         $today = today();
         $month = now();
 
-        $todayTransactions = Transaction::with('items')
-            ->whereDate('created_at', $today)
-            ->get();
-
-        $monthTransactions = Transaction::with('items')
-            ->whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->get();
+        $todayTransactions = $this->transactionRepo->getDailyTransactions($today->format('Y-m-d'));
+        $monthTransactions = $this->transactionRepo->getMonthlyTransactions($month->year, $month->month);
 
         return view('admin.reports.index', [
             'today' => [
@@ -52,10 +48,7 @@ class ReportController extends Controller
     {
         $date = $request->date ? \Carbon\Carbon::parse($request->date) : today();
 
-        $transactions = Transaction::with(['user', 'items'])
-            ->whereDate('created_at', $date)
-            ->latest()
-            ->get();
+        $transactions = $this->transactionRepo->getDailyTransactions($date->format('Y-m-d'));
 
         $summary = [
             'total_revenue' => $transactions->sum('grand_total'),
@@ -77,11 +70,7 @@ class ReportController extends Controller
             ? Carbon::createFromFormat('Y-m', $request->month)
             : now();
 
-        $transactions = Transaction::with(['user', 'items'])
-            ->whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->latest()
-            ->get();
+        $transactions = $this->transactionRepo->getMonthlyTransactions($month->year, $month->month);
 
         $summary = [
             'total_revenue' => $transactions->sum('grand_total'),
@@ -109,10 +98,7 @@ class ReportController extends Controller
     {
         $date = $request->date ? Carbon::parse($request->date) : today();
 
-        $transactions = Transaction::with(['user', 'items'])
-            ->whereDate('created_at', $date)
-            ->latest()
-            ->get();
+        $transactions = $this->transactionRepo->getDailyTransactions($date->format('Y-m-d'));
 
         $fileName = 'daily-report-'.$date->format('Y-m-d').'.xlsx';
 
@@ -128,11 +114,7 @@ class ReportController extends Controller
             ? Carbon::createFromFormat('Y-m', $request->month)
             : now();
 
-        $transactions = Transaction::with(['user', 'items'])
-            ->whereYear('created_at', $month->year)
-            ->whereMonth('created_at', $month->month)
-            ->latest()
-            ->get();
+        $transactions = $this->transactionRepo->getMonthlyTransactions($month->year, $month->month);
 
         $fileName = 'monthly-report-'.$month->format('Y-m').'.xlsx';
 

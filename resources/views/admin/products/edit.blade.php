@@ -84,20 +84,35 @@
                 <div class="bg-white rounded-lg shadow p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Pricing & Stock</h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {{-- Price --}}
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {{-- Price (Harga Jual) --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Price (Rp) <span class="text-red-500">*</span>
+                                Harga Jual (Rp) <span class="text-red-500">*</span>
                             </label>
                             <input
                                 type="number"
                                 name="price"
                                 value="{{ old('price', $product->price) }}"
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
                                 min="0"
                                 step="100"
                                 required
+                            >
+                        </div>
+
+                        {{-- Cost Price (Harga Modal) --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Harga Modal / HPP (Rp)
+                            </label>
+                            <input
+                                type="number"
+                                name="cost_price"
+                                value="{{ old('cost_price', $product->cost_price) }}"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                                min="0"
+                                step="100"
                             >
                         </div>
 
@@ -114,6 +129,26 @@
                                 min="0"
                                 required
                             >
+                        </div>
+
+                        {{-- Satuan / Unit --}}
+                        <div>
+                            <label for="unit" class="block text-sm font-medium text-gray-700 mb-2">
+                                Satuan (Unit)
+                            </label>
+                            <select
+                                name="unit"
+                                id="unit"
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="pcs" {{ old('unit', $product->unit ?? 'pcs') === 'pcs' ? 'selected' : '' }}>Pcs (Biji/Buah)</option>
+                                <option value="kg" {{ old('unit', $product->unit) === 'kg' ? 'selected' : '' }}>Kg (Kilogram)</option>
+                                <option value="porsi" {{ old('unit', $product->unit) === 'porsi' ? 'selected' : '' }}>Porsi / Mangkok</option>
+                                <option value="paket" {{ old('unit', $product->unit) === 'paket' ? 'selected' : '' }}>Paket / Layanan</option>
+                                <option value="unit" {{ old('unit', $product->unit) === 'unit' ? 'selected' : '' }}>Unit / Barang</option>
+                                <option value="meter" {{ old('unit', $product->unit) === 'meter' ? 'selected' : '' }}>Meter</option>
+                                <option value="jam" {{ old('unit', $product->unit) === 'jam' ? 'selected' : '' }}>Jam / Waktu</option>
+                            </select>
                         </div>
                     </div>
                 </div>

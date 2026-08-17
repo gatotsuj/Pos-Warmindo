@@ -3,49 +3,73 @@
 namespace App\Http\Controllers\Cashier;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
 use App\Models\Product;
-use App\Models\ReceiptSetting;
-use App\Models\StockMovement;
 use App\Models\Transaction;
-use App\Models\TransactionItem;
+use App\Repositories\Contracts\CategoryRepositoryInterface;
+use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Repositories\Contracts\ReceiptSettingRepositoryInterface;
+use App\Repositories\Contracts\TransactionRepositoryInterface;
 use App\Support\CurrentTenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PosController extends Controller
 {
-    //
+    protected ProductRepositoryInterface $productRepo;
+    protected CategoryRepositoryInterface $categoryRepo;
+    protected ReceiptSettingRepositoryInterface $receiptSettingRepo;
+    protected TransactionRepositoryInterface $transactionRepo;
+
+    public function __construct(
+        ProductRepositoryInterface $productRepo,
+        CategoryRepositoryInterface $categoryRepo,
+        ReceiptSettingRepositoryInterface $receiptSettingRepo,
+        TransactionRepositoryInterface $transactionRepo
+    ) {
+        $this->productRepo = $productRepo;
+        $this->categoryRepo = $categoryRepo;
+        $this->receiptSettingRepo = $receiptSettingRepo;
+        $this->transactionRepo = $transactionRepo;
+    }
+
     public function index(Request $request): View
     {
-        $products = Product::query()
-            ->with('category')
-            ->active()
-            ->where('stock', '>', 0)
-            ->when($request->search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('sku', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->category, function ($query, $categoryId) {
-                $query->where('category_id', $categoryId);
-            })
-            // ->orderBy('name')
-            ->get();
-
-        $categories = Category::whereHas('products', function ($query) {
-            $query->active()->where('stock', '>', 0);
-        })->orderBy('name')->get();
-
+        $products = $this->productRepo->getActiveInStock($request->all());
+        $categories = $this->categoryRepo->getActiveInStockOrderedByName();
         $cart = session('pos_cart', []);
+        $receiptSetting = $this->receiptSettingRepo->getSettingsOrNew();
 
-        $receiptSetting = ReceiptSetting::first();
+        $user = auth()->user();
+        $tenantId = session('current_tenant_id') ?? $user->tenant_id;
 
-        return view('cashier.pos', compact('products', 'categories', 'cart', 'receiptSetting'));
+        $activeShift = \App\Models\CashierShift::where('tenant_id', $tenantId)
+            ->where('user_id', $user->id)
+            ->where('status', 'open')
+            ->first();
+
+        if ($activeShift) {
+            $activeShift->current_cash_sales = Transaction::where('tenant_id', $tenantId)
+                ->where('payment_method', 'cash')
+                ->where('status', '!=', 'voided')
+                ->whereBetween('created_at', [$activeShift->opened_at, now()])
+                ->sum('grand_total');
+
+            $activeShift->current_non_cash_sales = Transaction::where('tenant_id', $tenantId)
+                ->whereIn('payment_method', ['card', 'qris'])
+                ->where('status', '!=', 'voided')
+                ->whereBetween('created_at', [$activeShift->opened_at, now()])
+                ->sum('grand_total');
+
+            $activeShift->current_cash_expenses = \App\Models\Akuntansi\Pengeluaran::where('tenant_id', $tenantId)
+                ->whereBetween('tanggal', [$activeShift->opened_at->format('Y-m-d'), now()->format('Y-m-d')])
+                ->sum('jumlah');
+
+            $activeShift->calculated_expected_cash = $activeShift->starting_cash + $activeShift->current_cash_sales - $activeShift->current_cash_expenses;
+        }
+
+        return view('cashier.pos', compact('products', 'categories', 'cart', 'receiptSetting', 'activeShift'));
     }
 
     /**
@@ -60,7 +84,7 @@ class PosController extends Controller
             ],
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        $product = $this->productRepo->findOrFail($request->product_id);
 
         // Check if product is available
         if (! $product->is_active || $product->stock <= 0) {
@@ -118,7 +142,7 @@ class PosController extends Controller
             'quantity' => 'required|integer|min:0',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        $product = $this->productRepo->findOrFail($request->product_id);
         $cart = session('pos_cart', []);
         $productId = $product->id;
 
@@ -196,7 +220,7 @@ class PosController extends Controller
      */
     private function calculateTotals(array $cart, float $discountPercent = 0): array
     {
-        $setting = ReceiptSetting::first();
+        $setting = $this->receiptSettingRepo->getSettingsOrNew();
         $taxPercent = $setting ? (float) $setting->tax_percent : 11;
         $taxEnabled = $setting ? (bool) $setting->tax_enabled : true;
 
@@ -235,92 +259,18 @@ class PosController extends Controller
             ], 400);
         }
 
-        // Load receipt settings
-        $setting = ReceiptSetting::first();
-        $taxPercent = $setting ? (float) $setting->tax_percent : 11;
-        $taxEnabled = $setting ? (bool) $setting->tax_enabled : true;
-        $discountAllowed = $setting ? (bool) $setting->discount_enabled : true;
-
-        // Calculate totals
-        $subtotal = collect($cart)->sum('subtotal');
-        $discountPercent = $discountAllowed ? ($request->discount_percent ?? 0) : 0;
-        $discountAmount = $subtotal * ($discountPercent / 100);
-        $afterDiscount = $subtotal - $discountAmount;
-        $taxAmount = $taxEnabled ? $afterDiscount * ($taxPercent / 100) : 0;
-        $taxPercentSaved = $taxEnabled ? $taxPercent : 0;
-        $grandTotal = round($afterDiscount + $taxAmount);
-
-        // Validate payment amount
-        if ($request->payment_method === 'cash' && $request->paid_amount < $grandTotal) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Jumlah pembayaran kurang.',
-            ], 400);
-        }
-
-        // For card/qris, paid amount equals grand total
-        $paidAmount = $request->payment_method === 'cash'
-            ? $request->paid_amount
-            : $grandTotal;
-
         try {
-            DB::beginTransaction();
+            $transaction = $this->transactionRepo->checkout($cart, $request->all(), auth()->id());
 
-            // Create transaction
-            $transaction = Transaction::create([
-                'invoice_number' => Transaction::generateInvoiceNumber(),
-                'user_id' => auth()->id(),
-                'subtotal' => $subtotal,
-                'discount_percent' => $discountPercent,
-                'discount_amount' => round($discountAmount),
-                'tax_percent' => $taxPercentSaved,
-                'tax_amount' => round($taxAmount),
-                'grand_total' => $grandTotal,
-                'payment_method' => $request->payment_method,
-                'paid_amount' => $paidAmount,
-                'change_amount' => max(0, $paidAmount - $grandTotal),
-                'notes' => $request->notes,
-                'status' => 'completed',
-            ]);
-
-            // Create transaction items & decrease stock
-            foreach ($cart as $item) {
-                $product = Product::find($item['id']);
-
-                if (! $product || ! $product->hasEnoughStock($item['quantity'])) {
-                    throw new \Exception("Stock {$item['name']} tidak mencukupi.");
-                }
-
-                TransactionItem::create([
-                    'transaction_id' => $transaction->id,
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'product_price' => $product->price,
-                    'quantity' => $item['quantity'],
-                    'subtotal' => $item['subtotal'],
-                ]);
-
-                $stockBefore = $product->stock;
-                $product->decreaseStock($item['quantity']);
-                $stockAfter = $product->fresh()->stock;
-
-                // Catat pergerakan stok
-                StockMovement::create([
-                    'product_id' => $product->id,
-                    'user_id' => auth()->id(),
-                    'type' => 'out',
-                    'quantity' => $item['quantity'],
-                    'stock_before' => $stockBefore,
-                    'stock_after' => $stockAfter,
-                    'reference' => $transaction->invoice_number,
-                    'notes' => 'Penjualan: '.$transaction->invoice_number,
-                ]);
+            // Auto-Journaling Akuntansi SAK
+            try {
+                app(\App\Services\AkuntansiService::class)->catatJurnalPos($transaction);
+            } catch (\Exception $accErr) {
+                \Illuminate\Support\Facades\Log::warning('Akuntansi Auto-Journal error: ' . $accErr->getMessage());
             }
 
             // Clear cart
             session()->forget('pos_cart');
-
-            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -330,8 +280,6 @@ class PosController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
-
             return response()->json([
                 'success' => false,
                 'message' => 'Transaksi gagal: '.$e->getMessage(),

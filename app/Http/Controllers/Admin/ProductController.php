@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Repositories\Contracts\CategoryRepositoryInterface;
+use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Support\CurrentTenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,24 +18,24 @@ use Illuminate\View\View;
 
 class ProductController extends Controller
 {
+    protected ProductRepositoryInterface $productRepo;
+    protected CategoryRepositoryInterface $categoryRepo;
+
+    public function __construct(
+        ProductRepositoryInterface $productRepo,
+        CategoryRepositoryInterface $categoryRepo
+    ) {
+        $this->productRepo = $productRepo;
+        $this->categoryRepo = $categoryRepo;
+    }
+
     /**
      * Display a listing of products.
      */
     public function index(Request $request): View
     {
-        $products = Product::query()
-            ->with('category')
-            ->search($request->search)
-            ->byCategory($request->category)
-            ->when($request->stock === 'low', fn ($q) => $q->lowStock())
-            ->when($request->stock === 'out', fn ($q) => $q->where('stock', 0))
-            ->when($request->status === 'active', fn ($q) => $q->active())
-            ->when($request->status === 'inactive', fn ($q) => $q->where('is_active', false))
-            ->latest()
-            ->paginate(12)
-            ->withQueryString();
-
-        $categories = Category::orderBy('name')->get();
+        $products = $this->productRepo->paginateFiltered($request->all(), 12)->withQueryString();
+        $categories = $this->categoryRepo->allOrderedByName();
 
         return view('admin.products.index', compact('products', 'categories'));
     }
@@ -43,7 +45,7 @@ class ProductController extends Controller
      */
     public function create(): View
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = $this->categoryRepo->allOrderedByName();
 
         return view('admin.products.create', compact('categories'));
     }
@@ -60,7 +62,7 @@ class ProductController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        Product::create($validated);
+        $this->productRepo->create($validated);
 
         return redirect()
             ->route('admin.products.index')
@@ -72,7 +74,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product): View
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = $this->categoryRepo->allOrderedByName();
 
         return view('admin.products.edit', compact('product', 'categories'));
     }
@@ -99,7 +101,7 @@ class ProductController extends Controller
             $validated['image'] = null;
         }
 
-        $product->update($validated);
+        $this->productRepo->update($product, $validated);
 
         return redirect()
             ->route('admin.products.index')
@@ -116,7 +118,7 @@ class ProductController extends Controller
             Storage::disk('public')->delete($product->image);
         }
 
-        $product->delete();
+        $this->productRepo->delete($product);
 
         return redirect()
             ->route('admin.products.index')
@@ -144,7 +146,9 @@ class ProductController extends Controller
             ],
             'description' => ['nullable', 'string', 'max:2000'],
             'price' => ['required', 'numeric', 'min:0', 'max:999999999'],
+            'cost_price' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
             'stock' => ['required', 'integer', 'min:0', 'max:999999'],
+            'unit' => ['nullable', 'string', 'max:30'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'is_active' => ['boolean'],
         ], [

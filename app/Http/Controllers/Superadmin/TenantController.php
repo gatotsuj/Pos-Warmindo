@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Superadmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Event;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Repositories\Contracts\EventRepositoryInterface;
+use App\Repositories\Contracts\TenantRepositoryInterface;
+use App\Repositories\Contracts\UserRepositoryInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,24 +16,31 @@ use Illuminate\View\View;
 
 class TenantController extends Controller
 {
+    protected TenantRepositoryInterface $tenantRepo;
+    protected EventRepositoryInterface $eventRepo;
+    protected UserRepositoryInterface $userRepo;
+
+    public function __construct(
+        TenantRepositoryInterface $tenantRepo,
+        EventRepositoryInterface $eventRepo,
+        UserRepositoryInterface $userRepo
+    ) {
+        $this->tenantRepo = $tenantRepo;
+        $this->eventRepo = $eventRepo;
+        $this->userRepo = $userRepo;
+    }
+
     public function index(Request $request): View
     {
-        $tenants = Tenant::query()
-            ->with('event')
-            ->withCount('users')
-            ->when($request->filled('event_id'), fn ($q) => $q->where('event_id', $request->integer('event_id')))
-            ->orderBy('name')
-            ->paginate(15)
-            ->withQueryString();
-
-        $events = Event::orderBy('name')->get();
+        $tenants = $this->tenantRepo->paginateFiltered($request->all(), 15)->withQueryString();
+        $events = $this->eventRepo->allOrderedByName();
 
         return view('superadmin.tenants.index', compact('tenants', 'events'));
     }
 
     public function create(): View
     {
-        $events = Event::where('is_active', true)->orderBy('name')->get();
+        $events = $this->eventRepo->getActiveOrderedByName();
 
         return view('superadmin.tenants.create', compact('events'));
     }
@@ -39,7 +48,7 @@ class TenantController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'event_id' => ['required', 'exists:events,id'],
+            'event_id' => ['nullable', 'exists:events,id'],
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:tenants,slug'],
             'is_active' => ['boolean'],
@@ -49,17 +58,18 @@ class TenantController extends Controller
         ]);
 
         $slug = $validated['slug'] ?? Tenant::generateUniqueSlug($validated['name']);
+        $eventId = $validated['event_id'] ?? (\App\Models\Event::first()?->id ?? 1);
 
-        DB::transaction(function () use ($request, $validated, $slug) {
-            $tenant = Tenant::create([
-                'event_id' => $validated['event_id'],
+        DB::transaction(function () use ($request, $validated, $slug, $eventId) {
+            $tenant = $this->tenantRepo->create([
+                'event_id' => $eventId,
                 'name' => $validated['name'],
                 'slug' => $slug,
                 'is_active' => $request->boolean('is_active', true),
             ]);
 
             if (! empty($validated['admin_email'])) {
-                User::create([
+                $this->userRepo->create([
                     'tenant_id' => $tenant->id,
                     'name' => $validated['admin_name'],
                     'email' => $validated['admin_email'],
@@ -77,12 +87,7 @@ class TenantController extends Controller
 
     public function edit(Tenant $tenant): View
     {
-        $events = Event::query()
-            ->where(function ($q) use ($tenant) {
-                $q->where('is_active', true)->orWhere('id', $tenant->event_id);
-            })
-            ->orderBy('name')
-            ->get();
+        $events = $this->eventRepo->getActiveOrSpecificOrderedByName($tenant->event_id);
 
         return view('superadmin.tenants.edit', compact('tenant', 'events'));
     }
@@ -98,7 +103,7 @@ class TenantController extends Controller
 
         $slug = $validated['slug'] ?? Tenant::generateUniqueSlug($validated['name'], $tenant->id);
 
-        $tenant->update([
+        $this->tenantRepo->update($tenant, [
             'event_id' => $validated['event_id'],
             'name' => $validated['name'],
             'slug' => $slug,
@@ -112,7 +117,7 @@ class TenantController extends Controller
 
     public function destroy(Tenant $tenant): RedirectResponse
     {
-        if ($tenant->users()->exists()) {
+        if ($this->tenantRepo->hasUsers($tenant)) {
             return redirect()
                 ->route('superadmin.tenants.index')
                 ->with('error', 'Tenant masih memiliki pengguna. Hapus atau pindahkan pengguna terlebih dahulu.');
@@ -124,7 +129,7 @@ class TenantController extends Controller
                 ->with('error', 'Tenant default tidak dapat dihapus.');
         }
 
-        $tenant->delete();
+        $this->tenantRepo->delete($tenant);
 
         return redirect()
             ->route('superadmin.tenants.index')

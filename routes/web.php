@@ -13,6 +13,10 @@ use App\Http\Controllers\Admin\ReceiptSettingController;
 use App\Http\Controllers\Superadmin\EventController;
 use App\Http\Controllers\Superadmin\FinancialReportController;
 use App\Http\Controllers\Superadmin\TenantController;
+use App\Http\Controllers\Accounting\AkunController;
+use App\Http\Controllers\Accounting\PengeluaranController;
+use App\Http\Controllers\Accounting\JurnalController;
+use App\Http\Controllers\Accounting\LaporanAkuntansiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -29,7 +33,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/tenants/{tenant}/enter', [TenantController::class, 'enter'])->name('tenants.enter');
         Route::get('/financial', [FinancialReportController::class, 'index'])->name('financial.index');
         Route::get('/financial/tenants/{tenant}', [FinancialReportController::class, 'showTenant'])->name('financial.tenant');
-        Route::resource('events', EventController::class)->except(['show']);
         Route::resource('tenants', TenantController::class)->except(['show']);
     });
 
@@ -49,7 +52,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/transactions/{transaction}/receipt', [TransactionController::class, 'receipt'])->name('transactions.receipt');
         Route::post('/transactions/{transaction}/void', [TransactionController::class, 'void'])->name('transactions.void');
 
+        // Shift Kasir (Buka & Tutup Laci Kas)
+        Route::post('/shifts/open', [\App\Http\Controllers\CashierShiftController::class, 'open'])->name('shifts.open');
+        Route::post('/shifts/{shift}/close', [\App\Http\Controllers\CashierShiftController::class, 'close'])->name('shifts.close');
+
+        // Modul Akuntansi & Keuangan SAK Indonesia (Hanya Admin & Superadmin)
+        Route::middleware(['role:admin|superadmin'])->prefix('akuntansi')->name('akuntansi.')->group(function () {
+            Route::get('/pengeluaran', [PengeluaranController::class, 'index'])->name('pengeluaran.index');
+            Route::post('/pengeluaran', [PengeluaranController::class, 'store'])->name('pengeluaran.store');
+            Route::delete('/pengeluaran/{pengeluaran}', [PengeluaranController::class, 'destroy'])->name('pengeluaran.destroy');
+
+            Route::get('/jurnal', [JurnalController::class, 'index'])->name('jurnal.index');
+            Route::post('/jurnal/manual', [JurnalController::class, 'storeManual'])->name('jurnal.manual');
+
+            Route::get('/laporan/laba-rugi', [LaporanAkuntansiController::class, 'labaRugi'])->name('laporan.laba-rugi');
+            Route::get('/laporan/neraca', [LaporanAkuntansiController::class, 'neraca'])->name('laporan.neraca');
+            Route::get('/laporan/buku-besar', [LaporanAkuntansiController::class, 'bukuBesar'])->name('laporan.buku-besar');
+
+            Route::get('/akun', [AkunController::class, 'index'])->name('akun.index');
+            Route::post('/akun', [AkunController::class, 'store'])->name('akun.store');
+            Route::post('/akun/reset', [AkunController::class, 'resetDefault'])->name('akun.reset');
+            Route::put('/akun/{akun}', [AkunController::class, 'update'])->name('akun.update');
+            Route::delete('/akun/{akun}', [AkunController::class, 'destroy'])->name('akun.destroy');
+        });
+
         Route::middleware(['role:admin|superadmin'])->prefix('admin')->name('admin.')->group(function () {
+            Route::get('/shifts', [\App\Http\Controllers\CashierShiftController::class, 'index'])->name('shifts.index');
             Route::resource('categories', CategoryController::class);
             Route::resource('products', ProductController::class);
 

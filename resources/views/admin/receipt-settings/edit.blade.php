@@ -58,16 +58,89 @@
                 </div>
 
                 {{-- Store Name --}}
-                <div class="mb-4">
-                    <label for="store_name" class="block text-sm font-medium text-slate-700 mb-1">
+                <div class="mb-6">
+                    <label for="store_name" class="block text-sm font-medium text-slate-700 mb-2">
                         Store Name <span class="text-red-500">*</span>
                     </label>
                     <input type="text" id="store_name" name="store_name"
                         value="{{ old('store_name', $settings->store_name) }}" required
-                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 @error('store_name') border-red-300 @enderror">
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 @error('store_name') border-red-300 @enderror">
                     @error('store_name')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
+                </div>
+
+                {{-- Fitur Ganti Warna Tema (Brand Theme Color) --}}
+                <div class="mb-6 border-t border-b border-slate-100 py-6">
+                    <label class="block text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
+                        <span>Warna Tema Aplikasi (Brand Theme Color)</span>
+                    </label>
+                    <p class="text-xs text-slate-500 mb-3">Pilih skema warna utama sesuai identitas visual brand/toko Anda.</p>
+
+                    @php $selectedColor = old('theme_color', $settings->theme_color ?? 'red'); @endphp
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" x-data="{ color: '{{ $selectedColor }}' }">
+                        {{-- Red / Warmindo --}}
+                        <label @click="color = 'red'" :class="color === 'red' ? 'border-red-600 bg-red-50/50 ring-2 ring-red-500' : 'border-slate-200 bg-white'" class="relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md">
+                            <input type="radio" name="theme_color" value="red" x-model="color" class="sr-only">
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-r from-red-600 to-red-700 shadow-sm flex-shrink-0"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Indomie Red</p>
+                                <p class="text-[10px] text-slate-500">Merah Kuliner</p>
+                            </div>
+                        </label>
+
+                        {{-- Emerald Green --}}
+                        <label @click="color = 'green'" :class="color === 'green' ? 'border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500' : 'border-slate-200 bg-white'" class="relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md">
+                            <input type="radio" name="theme_color" value="green" x-model="color" class="sr-only">
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-700 shadow-sm flex-shrink-0"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Emerald Green</p>
+                                <p class="text-[10px] text-slate-500">Hijau Eco / Sembako</p>
+                            </div>
+                        </label>
+
+                        {{-- Royal Blue --}}
+                        <label @click="color = 'blue'" :class="color === 'blue' ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-500' : 'border-slate-200 bg-white'" class="relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md">
+                            <input type="radio" name="theme_color" value="blue" x-model="color" class="sr-only">
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-700 shadow-sm flex-shrink-0"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Royal Blue</p>
+                                <p class="text-[10px] text-slate-500">Biru Korporat / Retail</p>
+                            </div>
+                        </label>
+
+                        {{-- Indigo --}}
+                        <label @click="color = 'indigo'" :class="color === 'indigo' ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500' : 'border-slate-200 bg-white'" class="relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md">
+                            <input type="radio" name="theme_color" value="indigo" x-model="color" class="sr-only">
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-r from-indigo-600 to-indigo-700 shadow-sm flex-shrink-0"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Deep Indigo</p>
+                                <p class="text-[10px] text-slate-500">Fashion / Salon</p>
+                            </div>
+                        </label>
+
+                        {{-- Amber Gold --}}
+                        <label @click="color = 'amber'" :class="color === 'amber' ? 'border-amber-600 bg-amber-50/50 ring-2 ring-amber-500' : 'border-slate-200 bg-white'" class="relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md">
+                            <input type="radio" name="theme_color" value="amber" x-model="color" class="sr-only">
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 shadow-sm flex-shrink-0"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Amber Gold</p>
+                                <p class="text-[10px] text-slate-500">Cafe / Kopi / Bakery</p>
+                            </div>
+                        </label>
+
+                        {{-- Dark Slate --}}
+                        <label @click="color = 'slate'" :class="color === 'slate' ? 'border-slate-800 bg-slate-100 ring-2 ring-slate-700' : 'border-slate-200 bg-white'" class="relative flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-md">
+                            <input type="radio" name="theme_color" value="slate" x-model="color" class="sr-only">
+                            <span class="w-6 h-6 rounded-full bg-gradient-to-r from-slate-800 to-slate-900 shadow-sm flex-shrink-0"></span>
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Dark Slate</p>
+                                <p class="text-[10px] text-slate-500">Barbershop / Minimalis</p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
 
                 {{-- Store Address --}}
@@ -207,6 +280,60 @@
                                 after:transition-all peer-checked:bg-indigo-600"></div>
                         </label>
                     </div>
+                </div>
+
+                {{-- Payment Method Toggles --}}
+                <div class="mb-6 border-t border-slate-100 pt-6">
+                    <label class="block text-sm font-bold text-slate-800 mb-1 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>Metode Pembayaran yang Diterima Kasir</span>
+                    </label>
+                    <p class="text-xs text-slate-500 mb-4">Pilih dan aktifkan metode pembayaran yang dapat diterima di kasir POS toko Anda.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {{-- Cash Toggle --}}
+                        <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Tunai (Cash)</p>
+                                <p class="text-[10px] text-slate-500">Uang fisik kasir</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_cash_enabled" value="1"
+                                    {{ old('is_cash_enabled', $settings->is_cash_enabled ?? true) ? 'checked' : '' }}
+                                    class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                            </label>
+                        </div>
+
+                        {{-- QRIS Toggle --}}
+                        <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">QRIS / E-Wallet</p>
+                                <p class="text-[10px] text-slate-500">Scan barcode QR</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_qris_enabled" value="1"
+                                    {{ old('is_qris_enabled', $settings->is_qris_enabled ?? true) ? 'checked' : '' }}
+                                    class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+
+                        {{-- Card Toggle --}}
+                        <div class="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <div>
+                                <p class="text-xs font-bold text-slate-800">Debit / Credit Card</p>
+                                <p class="text-[10px] text-slate-500">Mesin EDC Kartu</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="is_card_enabled" value="1"
+                                    {{ old('is_card_enabled', $settings->is_card_enabled ?? true) ? 'checked' : '' }}
+                                    class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
 
                     <div class="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                         <p class="text-xs text-amber-700 flex items-start gap-2">

@@ -38,82 +38,135 @@
         </form>
     </div>
 
-    {{-- Table --}}
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    {{-- Table & Card View --}}
+    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
         @if($transactions->count() > 0)
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pembayaran</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kasir</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200">
-                    @foreach($transactions as $transaction)
-                        <tr class="hover:bg-gray-50 {{ $transaction->isVoided() ? 'opacity-60' : '' }}">
-                            <td class="px-6 py-4 font-medium text-blue-600 font-mono text-sm">
-                                {{ $transaction->invoice_number }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-500">
-                                {{ $transaction->created_at->format('d/m/Y H:i') }}
-                            </td>
-                            <td class="px-6 py-4 text-sm">
-                                {{ $transaction->items->sum('quantity') }} item
-                            </td>
-                            <td class="px-6 py-4 font-medium text-sm {{ $transaction->isVoided() ? 'line-through text-gray-400' : '' }}">
-                                {{ $transaction->formatted_grand_total }}
-                            </td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 text-xs rounded-full font-medium
-                                    {{ $transaction->payment_method === 'cash' ? 'bg-green-100 text-green-800' :
-                                       ($transaction->payment_method === 'card' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800') }}">
-                                    {{ ucfirst($transaction->payment_method) }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-sm text-gray-600">{{ $transaction->user->name }}</td>
-                            <td class="px-6 py-4">
-                                @if($transaction->isVoided())
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></path></svg>
-                                        Dibatalkan
+            {{-- Desktop Table View --}}
+            <div class="hidden md:block overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pembayaran</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kasir</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @foreach($transactions as $transaction)
+                            <tr class="hover:bg-gray-50 {{ $transaction->isVoided() ? 'opacity-60' : '' }}">
+                                <td class="px-6 py-4 font-medium text-blue-600 font-mono text-sm">
+                                    {{ $transaction->invoice_number }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                    {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    {{ $transaction->items->sum('quantity') }} item
+                                </td>
+                                <td class="px-6 py-4 font-medium text-sm {{ $transaction->isVoided() ? 'line-through text-gray-400' : '' }}">
+                                    {{ $transaction->formatted_grand_total }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 text-xs rounded-full font-medium
+                                        {{ $transaction->payment_method === 'cash' ? 'bg-green-100 text-green-800' :
+                                           ($transaction->payment_method === 'card' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800') }}">
+                                        {{ ucfirst($transaction->payment_method) }}
                                     </span>
-                                @else
-                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></path></svg>
-                                        Selesai
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-right space-x-2">
-                                <button type="button"
-                                        x-data
-                                        @click="$dispatch('open-modal', 'transaction-detail-{{ $transaction->id }}')"
-                                        class="text-blue-600 hover:underline text-sm">
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">{{ $transaction->user->name }}</td>
+                                <td class="px-6 py-4">
+                                    @if($transaction->isVoided())
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></path></svg>
+                                            Dibatalkan
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></path></svg>
+                                            Selesai
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="px-6 py-4 text-right space-x-2">
+                                    <button type="button"
+                                            x-data
+                                            @click="$dispatch('open-modal', 'transaction-detail-{{ $transaction->id }}')"
+                                            class="text-blue-600 hover:underline text-sm">
+                                        Detail
+                                    </button>
+                                    @if(!$transaction->isVoided())
+                                        <a href="{{ route('transactions.receipt', $transaction) }}" target="_blank"
+                                           class="text-gray-600 hover:underline text-sm">Struk</a>
+                                    @endif
+                                    @if(auth()->user()->isAdmin() && !$transaction->isVoided())
+                                        <button type="button"
+                                                x-data
+                                                @click="$dispatch('open-modal', 'void-confirm-{{ $transaction->id }}')"
+                                                class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                            Batalkan
+                                        </button>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Mobile Cards View --}}
+            <div class="block md:hidden divide-y divide-slate-100">
+                @foreach($transactions as $transaction)
+                    <div class="p-4 space-y-2.5 hover:bg-slate-50 transition-colors {{ $transaction->isVoided() ? 'opacity-60 bg-red-50/30' : '' }}">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono font-bold text-xs text-blue-600">{{ $transaction->invoice_number }}</span>
+                            @if($transaction->isVoided())
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-700">Dibatalkan</span>
+                            @else
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-green-100 text-green-700">Selesai</span>
+                            @endif
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-slate-500">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>{{ $transaction->created_at->format('d/m/Y H:i') }} ({{ $transaction->user->name }})</span>
+                            </span>
+                            <span class="px-2 py-0.5 rounded-full font-bold uppercase text-[10px]
+                                {{ $transaction->payment_method === 'cash' ? 'bg-green-100 text-green-800' :
+                                   ($transaction->payment_method === 'card' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800') }}">
+                                {{ $transaction->payment_method }}
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+                            <div>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Total ({{ $transaction->items->sum('quantity') }} item)</p>
+                                <p class="text-base font-black text-slate-800 {{ $transaction->isVoided() ? 'line-through text-gray-400' : '' }}">
+                                    {{ $transaction->formatted_grand_total }}
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" x-data @click="$dispatch('open-modal', 'transaction-detail-{{ $transaction->id }}')" class="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-200">
                                     Detail
                                 </button>
                                 @if(!$transaction->isVoided())
-                                    <a href="{{ route('transactions.receipt', $transaction) }}" target="_blank"
-                                       class="text-gray-600 hover:underline text-sm">Struk</a>
+                                    <a href="{{ route('transactions.receipt', $transaction) }}" target="_blank" class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100">
+                                        Struk
+                                    </a>
                                 @endif
                                 @if(auth()->user()->isAdmin() && !$transaction->isVoided())
-                                    <button type="button"
-                                            x-data
-                                            @click="$dispatch('open-modal', 'void-confirm-{{ $transaction->id }}')"
-                                            class="text-red-500 hover:text-red-700 text-sm font-medium">
-                                        Batalkan
+                                    <button type="button" x-data @click="$dispatch('open-modal', 'void-confirm-{{ $transaction->id }}')" class="px-2 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100">
+                                        Void
                                     </button>
                                 @endif
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
 
             {{-- Detail & Void Modals --}}
             @foreach($transactions as $transaction)
@@ -137,7 +190,10 @@
                     <div class="p-6 space-y-5">
                         @if($transaction->isVoided())
                             <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-sm">
-                                <p class="font-semibold text-red-700 mb-1">⚠️ Transaksi ini telah dibatalkan</p>
+                                <p class="font-semibold text-red-700 mb-1 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <span>Transaksi ini telah dibatalkan</span>
+                                </p>
                                 <p class="text-red-600">Alasan: {{ $transaction->void_reason }}</p>
                                 <p class="text-red-500 text-xs mt-1">
                                     Dibatalkan oleh {{ $transaction->voidedBy?->name }} pada {{ $transaction->voided_at?->format('d/m/Y H:i') }}
@@ -210,8 +266,9 @@
                         </button>
                         @if(!$transaction->isVoided())
                             <a href="{{ route('transactions.receipt', $transaction) }}" target="_blank"
-                               class="px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-800 transition">
-                                🖨️ Cetak Struk
+                               class="px-4 py-2 text-sm font-medium text-white bg-slate-700 rounded-lg hover:bg-slate-800 transition inline-flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Cetak Struk</span>
                             </a>
                         @endif
                     </div>
@@ -234,7 +291,10 @@
                             </div>
 
                             <div class="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4 text-sm text-amber-700">
-                                <p class="font-semibold mb-1">⚠️ Tindakan ini tidak dapat dibatalkan.</p>
+                                <p class="font-semibold mb-1 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <span>Tindakan ini tidak dapat dibatalkan.</span>
+                                </p>
                                 <p>Stok semua item akan dikembalikan secara otomatis.</p>
                             </div>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Repositories\Contracts\CategoryRepositoryInterface;
 use App\Support\CurrentTenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -12,19 +13,19 @@ use Illuminate\View\View;
 
 class CategoryController extends Controller
 {
+    protected CategoryRepositoryInterface $categoryRepo;
+
+    public function __construct(CategoryRepositoryInterface $categoryRepo)
+    {
+        $this->categoryRepo = $categoryRepo;
+    }
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request): View
     {
-        $query = Category::withCount('products');
-
-        // Apply search filter
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-
-        $categories = $query->latest()->paginate(5)->withQueryString();
+        $categories = $this->categoryRepo->paginateWithProductsCount($request->search, 5)->withQueryString();
 
         return view('admin.categories.index', [
             'categories' => $categories,
@@ -55,7 +56,7 @@ class CategoryController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        Category::create($validated);
+        $this->categoryRepo->create($validated);
 
         return redirect()
             ->route('admin.categories.index')
@@ -89,7 +90,7 @@ class CategoryController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $category->update($validated);
+        $this->categoryRepo->update($category, $validated);
 
         return redirect()
             ->route('admin.categories.index')
@@ -102,13 +103,13 @@ class CategoryController extends Controller
     public function destroy(Category $category): RedirectResponse
     {
         // Prevent delete if category has products
-        if ($category->products()->exists()) {
+        if ($this->categoryRepo->hasProducts($category)) {
             return redirect()
                 ->route('admin.categories.index')
                 ->with('error', 'Cannot delete category. It has associated products.');
         }
 
-        $category->delete();
+        $this->categoryRepo->delete($category);
 
         return redirect()
             ->route('admin.categories.index')

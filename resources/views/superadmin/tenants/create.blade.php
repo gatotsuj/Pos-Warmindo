@@ -5,8 +5,8 @@
 @section('content')
     <div class="max-w-2xl">
         <div class="mb-6">
-            <h1 class="text-2xl font-bold text-slate-800">Daftar tenant untuk acara</h1>
-            <p class="text-sm text-slate-600 mt-1">Pilih acara, isi data tenant. Opsional: buat akun admin pertama untuk tenant ini.</p>
+            <h1 class="text-2xl font-bold text-slate-800">Daftar Tenant / Toko Baru</h1>
+            <p class="text-sm text-slate-600 mt-1">Isi data tenant & buat akun admin pertama untuk tenant ini.</p>
         </div>
 
         <div class="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
@@ -14,22 +14,11 @@
                 @csrf
 
                 <div>
-                    <h2 class="text-sm font-semibold text-slate-800 mb-4">Acara & tenant</h2>
+                    <h2 class="text-sm font-semibold text-slate-800 mb-4">Informasi Tenant / Toko</h2>
                     <div class="space-y-4">
-                        <div>
-                            <label for="event_id" class="block text-sm font-medium text-slate-700 mb-2">Acara <span class="text-red-500">*</span></label>
-                            <select id="event_id" name="event_id" required
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 @error('event_id') border-red-300 @enderror">
-                                <option value="">— Pilih acara —</option>
-                                @foreach ($events as $ev)
-                                    <option value="{{ $ev->id }}" @selected(old('event_id') == $ev->id)>{{ $ev->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('event_id')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                            <p class="mt-1 text-xs text-slate-500">Belum ada acara? <a href="{{ route('superadmin.events.create') }}" class="text-indigo-600 hover:underline">Buat acara</a> dulu.</p>
-                        </div>
+                        @if(isset($events) && $events->count() > 0)
+                            <input type="hidden" name="event_id" value="{{ old('event_id', $events->first()->id) }}">
+                        @endif
 
                         <div>
                             <label for="name" class="block text-sm font-medium text-slate-700 mb-2">Nama tenant <span class="text-red-500">*</span></label>
