@@ -88,6 +88,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/reports/monthly/export', [ReportController::class, 'exportMonthly'])->name('reports.monthly.export');
 
             Route::resource('users', UserController::class);
+            Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('users.reset-password');
 
             Route::get('/receipt-settings', [ReceiptSettingController::class, 'edit'])->name('receipt-settings.edit');
             Route::put('/receipt-settings', [ReceiptSettingController::class, 'update'])->name('receipt-settings.update');

@@ -1,118 +1,162 @@
-# 🍜 Warmindo POS System
+# Warmindo POS & SaaS Multi-Tenant Platform
 
-Sistem Point of Sale (POS) modern berbasis Web khusus untuk mengelola bisnis Warmindo (Warung Makan Indomie). Dibangun menggunakan **Laravel 10/11**, **Alpine.js**, dan **Tailwind CSS**. 
+![Laravel](https://img.shields.io/badge/Laravel-10%2F11-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Alpine.js](https://img.shields.io/badge/Alpine.js-3.x-8BC0D0?style=for-the-badge&logo=alpine.js&logoColor=white)
+![Standard Akuntansi](https://img.shields.io/badge/Akuntansi-SAK%20EMKM-0052CC?style=for-the-badge)
 
-Sistem ini dirancang untuk mempercepat proses pemesanan, manajemen stok produk secara real-time, cetak struk, fitur *void* (pembatalan), dan dilengkapi dengan *dashboard* analitik harian.
+Sistem Point of Sale (POS) & Platform SaaS Multi-Tenant Modern berbasis Web khusus untuk mengelola bisnis kuliner, Warmindo (Warung Makan Indomie), dan UMKM Indonesia. Dibangun menggunakan **Laravel**, **Alpine.js**, **Tailwind CSS**, serta dilengkapi dengan **Mesin Akuntansi Otomatis Standar SAK EMKM**.
 
 ---
 
-## 📋 Prasyarat Sistem
+## Fitur Utama & Modul Sistem
+
+### 1. PWA POS Kasir & Manajemen Shift Kasir
+- **Progressive Web App (PWA)**: Dapat diinstal di HP/Tablet Android & iOS dengan kemampuan simpan offline.
+- **Kasir Drawer Interface**: Tampilan POS interaktif dengan keranjang belanja slide-over, pencarian produk cepat, serta filter kategori.
+- **Manajemen Shift Kasir & Rekap Laci Kas (`cashier_shifts`)**:
+  - Modal input saldo kas awal saat kasir membuka shift.
+  - Ringkasan transaksi kas vs non-kas selama shift berlangsung.
+  - Modal penutupan shift & rekonsiliasi laci kasir (penghitungan uang fisik vs saldo sistem + selisih kas).
+- **Pengaturan Metode Pembayaran Toko**: Admin toko dapat mengaktifkan/menonaktifkan metode pembayaran **Tunai (Cash)**, **QRIS / E-Wallet**, dan **Kartu Debit/Kredit**.
+- **Cetak Struk Termal**: Terintegrasi logo toko, nama kasir bertugas, rincian diskon, pajak, serta footer struk dinamis.
+
+### 2. Arsitektur SaaS Multi-Tenant & Branding Toko
+- **Isolasi Data Tenant (`BelongsToTenant`)**: Setiap data transaksi, stok, kasir, dan akun keuangan terpisah dengan aman antar-tenant/warung.
+- **Superadmin Switch Context**: Fitur khusus Superadmin untuk berpindah (*switch*) ke konteks toko mana pun untuk audit atau penanganan kendala.
+- **Kustomisasi Warna Tema Brand Toko**: Pilihan 6 tema warna (Indomie Red, Emerald Green, Royal Blue, Deep Indigo, Amber Gold, Dark Slate) yang otomatis mengubah gradien sidebar dan button.
+- **Dynamic Store Logo**: Upload logo toko yang langsung tampil di sidebar aplikasi dan cetak struk termal.
+
+### 3. Mesin Akuntansi Standar SAK EMKM (Khusus Admin/Superadmin)
+- **Bagan Akun Standar 4-Digit (Chart of Accounts / COA)**: Templat akun standar Indonesia (Aset, Kewajiban, Ekuitas, Pendapatan, HPP, Beban) dilengkapi fitur *Sync & Reset Templat SaaS*.
+- **Auto-Journaling Engine**:
+  - Transaksi checkout POS otomatis membentuk Jurnal Umum Kas/Bank vs Pendapatan & HPP.
+  - Pembatalan transaksi (*Void*) otomatis membuat Jurnal pembalik.
+- **Manajemen Pengeluaran Kas (Petty Cash)**: Pencatatan beban operasional kasir dengan validasi nominal presisi (`step="any"`).
+- **Laporan Keuangan Otomatis**:
+  - **Laporan Laba Rugi** (*Income Statement*)
+  - **Laporan Neraca Seimbang** (*Balance Sheet*)
+  - **Buku Besar** (*General Ledger*) per akun
+  - **Jurnal Umum** (*General Journal*)
+
+### 4. Manajemen Inventori & Satuan Universal UMKM
+- **Multi-Satuan Produk**: Mendukung satuan universal UMKM (**Pcs, Kg, Porsi, Paket, Unit, Meter, Jam**).
+- **Harga Modal / HPP (`cost_price`)**: Input harga beli/modal produk untuk perhitungan Laba Kotor (*Gross Margin*).
+- **Log Pergerakan Stok & Warning Alert**: Peringatan otomatis ketika stok produk mencapai batas kritis (low stock).
+
+### 5. Analitik & Business Intelligence (BI)
+- **Analisis Jam Sibuk Toko (*Peak Hours Chart*)**: Grafik frekuensi transaksi per jam (06.00 – 23.00 WIB) untuk menentukan jadwal shift kasir.
+- **Ratio Metode Pembayaran**: Grafik persentase transaksi Cash vs QRIS vs Card.
+- **Produk Terlaris & Produk Paling Menguntungkan (*Top Profit Products*)**: Membandingkan produk terlaris secara unit vs produk penghasil Laba Kotor Nominal Rp terbesar.
+
+### 6. Manajemen Peran & Reset Password Instan
+- **Reset Password Instan oleh Admin**: Admin Toko dapat melakukan reset password kasir/staff langsung dari tabel manajemen pengguna (`/admin/users`) via modal popup tanpa memerlukan verifikasi email.
+- **Identitas Kasir pada Struk**: Menampilkan nama kasir yang bertugas menangani transaksi pada struk fisik.
+- **100% Clean SVG Vector Icons**: Bebas emoji keyboard untuk tampilan antarmuka yang konsisten dan profesional.
+
+---
+
+## Prasyarat Sistem
 
 Sebelum menginstal aplikasi ini, pastikan sistem/server Anda sudah terinstal:
-
 - **PHP** >= 8.1
 - **Composer** (Dependency Manager untuk PHP)
 - **Node.js** & **NPM** (Untuk mengompilasi aset CSS/JS)
-- **MySQL** atau **MariaDB** (Database)
-- Web Server lokal seperti **Laragon** (Direkomendasikan untuk Windows), **XAMPP**, atau **Valet**
+- **MySQL** atau **MariaDB** (Database Engine)
+- Web Server lokal seperti **Laragon** (Windows), **XAMPP**, atau **Nginx/Apache**
 
 ---
 
-## 🚀 Cara Instalasi
-
-Ikuti langkah-langkah berikut untuk menginstal dan menjalankan proyek ini di *local environment* Anda dari *repository* GitHub:
+## Cara Instalasi & Run Local
 
 ### 1. Clone Repository
-Buka terminal (Command Prompt / PowerShell / Git Bash) di folder server lokal Anda (misal `C:\laragon\www` atau `htdocs`), lalu jalankan perintah berikut:
 ```bash
 git clone https://github.com/gatotsuj/Pos-Warmindo.git
 cd Pos-Warmindo
 ```
-*(Catatan: Pastikan Anda mengganti URL GitHub dengan URL repositori yang valid).*
 
-### 2. Install Dependensi PHP (Composer)
-Unduh seluruh pustaka *backend* (vendor) yang dibutuhkan oleh Laravel:
+### 2. Install Dependensi Backend (Composer)
 ```bash
 composer install
 ```
 
-### 3. Install Dependensi Frontend (NPM)
-Unduh seluruh pustaka *frontend* (Tailwind CSS, Alpine.js, dll):
+### 3. Install & Compile Frontend Assets (NPM)
 ```bash
 npm install
+npm run build
 ```
 
 ### 4. Konfigurasi Environment (`.env`)
-Aplikasi Laravel membutuhkan file `.env`. Salin template yang sudah disediakan:
-- **Windows:** `copy .env.example .env`
-- **Mac/Linux:** `cp .env.example .env`
-
-Buka file `.env` yang baru dibuat di teks editor Anda, lalu sesuaikan koneksi database. Pastikan Anda sudah membuat *database kosong* (misal bernama `warmindo_pos`) di MySQL (via phpMyAdmin / HeidiSQL):
+Salin file template `.env.example`:
+```bash
+copy .env.example .env
+```
+Sesuaikan konfigurasi database MySQL pada file `.env`:
 ```env
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=warmindo_pos
+DB_DATABASE=pos_warmindo
 DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-### 5. Generate Application Key
-Buat kunci keamanan unik untuk aplikasi Anda:
+### 5. Generate Application Key & Migrasi Database
 ```bash
 php artisan key:generate
-```
-
-### 6. Link Folder Storage
-Aplikasi ini menyimpan gambar produk secara lokal. Agar gambar bisa diakses dari *browser*, Anda wajib membuat *symlink*:
-```bash
+php artisan migrate --seed
 php artisan storage:link
 ```
 
-### 7. Migrasi Database dan Seeding
-Jalankan migrasi untuk membuat tabel-tabel database sekaligus memasukkan data dummy (Produk, Kategori, dan Akun Admin):
-```bash
-php artisan migrate:fresh --seed
-```
-
-### 8. Kompilasi Aset Frontend
-Tampilan aplikasi (desain *glassmorphism*, UI modern) membutuhkan file CSS yang harus dikompilasi oleh Vite. Jalankan:
-```bash
-npm run build
-```
-
-### 9. Jalankan Aplikasi
-Jika Anda menggunakan **Laragon**, Anda dapat langsung membuka browser dan mengakses: `http://pos-system-warmindo.test`
-
-Atau, Anda dapat menggunakan server internal artisan:
+### 6. Jalankan Server Lokal
 ```bash
 php artisan serve
 ```
-Aplikasi akan berjalan di alamat `http://localhost:8000`.
+Akses aplikasi melalui browser di `http://127.0.0.1:8000`.
 
 ---
 
-## 🔐 Kredensial Akses Default
+## Hak Akses Default (Seeder)
 
-Setelah proses seeder berhasil dijalankan, Anda bisa masuk (Login) menggunakan data default administrator:
-
-*   **Email:** `admin@pos.com` 
-*   **Password:** `password` 
-
-*   **Email:** `cashier@pos.com` 
-*   **Password:** `password`
-
-*   **Email:** `superadmin@pos.com`
-*   **Password:** `password`    
-
-*(Anda bisa mengubah kredensial ini nanti di pengaturan profil atau dengan mengedit seeder `database/seeders/AdminUserSeeder.php`)*.
+| Peran (Role) | Email Login | Password | Akses |
+| :--- | :--- | :--- | :--- |
+| **Superadmin** | `superadmin@pos.com` | `password` | Seluruh Tenant, SaaS Admin & Switcher |
+| **Admin Toko** | `admin@warmindo.com` | `password` | Produk, Audit Shift, Struk, **Akuntansi SAK** |
+| **Kasir** | `kasir@warmindo.com` | `password` | POS Kasir (`/pos`), Buka/Tutup Shift Kasir |
 
 ---
 
-## 🛠 Fitur Utama
+## Struktur Direktori Utama
 
-- **Dashboard Analitik**: Pantau tren pendapatan, item terlaris, dan rekap transaksi 7 hari terakhir.
-- **Transaksi POS Modern**: Layar kasir (Point of Sale) interaktif, dengan perhitungan stok, pajak, dan diskon yang akurat tanpa loading pindah halaman.
-- **Manajemen Produk & Kategori**: UI yang *user-friendly* untuk menambah/mengedit produk dan foto.
-- **Riwayat Stok & Void**: Melacak *Stock Movement* dan mendukung fitur batal (Void) transaksi dengan pengembalian stok yang aman (Transaction DB).
-- **Responsif & Ringan**: Estetika modern premium menggunakan TailwindCSS dengan warna khas *Indomie* (Merah, Kuning, Hijau) dan transisi yang *smooth*.
+```text
+Pos-System-warmindo/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── Accounting/            # Controller Jurnal, Akun, Laba Rugi, Neraca, Pengeluaran
+│   │   ├── Admin/                 # Controller Produk, User, Settings, Reports
+│   │   ├── Cashier/               # Controller POS Kasir Engine
+│   │   └── CashierShiftController # Controller Shift & Rekap Kas Laci
+│   ├── Models/
+│   │   ├── Akuntansi/             # Model Akun, JurnalHeader, JurnalDetail, Pengeluaran
+│   │   ├── CashierShift.php       # Model Shift Kasir
+│   │   ├── Product.php            # Model Produk (Satuan, Cost Price, Stock)
+│   │   └── ReceiptSetting.php     # Model Pengaturan Struk, Logo, Tema Warna, Payment Toggle
+│   ├── Repositories/              # Pattern Repository Interface & Eloquent
+│   └── Services/                  # AkuntansiService (Engine Auto-Journaling SAK)
+├── database/
+│   └── migrations/                # Skema Database & Migrasi System
+├── resources/
+│   ├── views/
+│   │   ├── accounting/            # Template Blade Akuntansi SAK
+│   │   ├── admin/                 # Template Blade Dashboard Admin, Shift Audit, Settings
+│   │   ├── cashier/               # Template Blade POS Kasir (Drawer, Modals)
+│   │   ├── profile/               # Template Blade Profile User Redesign
+│   │   └── layouts/               # Master Layout App & Dynamic Theme Color
+└── routes/
+    └── web.php                    # Middleware Auth, Tenant & Role Scoping Routes
+```
+
+---
+
+## Lisensi
+Dipersembahkan untuk pengembangan sistem POS & SaaS UMKM Kuliner Indonesia. Hak Cipta © 2026.

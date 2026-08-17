@@ -96,7 +96,7 @@
                                 value="{{ old('price', $product->price) }}"
                                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
                                 min="0"
-                                step="100"
+                                step="any"
                                 required
                             >
                         </div>
@@ -112,7 +112,7 @@
                                 value="{{ old('cost_price', $product->cost_price) }}"
                                 class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
                                 min="0"
-                                step="100"
+                                step="any"
                             >
                         </div>
 

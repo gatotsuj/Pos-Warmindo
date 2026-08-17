@@ -130,4 +130,26 @@ class UserController extends Controller
             abort(403);
         }
     }
+
+    /**
+     * Instant Reset Password for Cashier/User by Admin.
+     */
+    public function resetPassword(Request $request, User $user)
+    {
+        $this->ensureTenantUser($user);
+
+        $request->validate([
+            'new_password' => ['required', 'string', 'min:6'],
+        ], [
+            'new_password.required' => 'Password baru wajib diisi.',
+            'new_password.min'      => 'Password minimal 6 karakter.',
+        ]);
+
+        $user->update([
+            'password' => Hash::make($request->new_password),
+        ]);
+
+        return redirect()->route('admin.users.index')
+            ->with('success', 'Password pengguna ' . $user->name . ' berhasil di-reset!');
+    }
 }

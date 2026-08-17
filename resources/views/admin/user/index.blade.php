@@ -90,11 +90,19 @@
                                             {{ ucfirst($user->role) }}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex items-center justify-end gap-2">
+                                            {{-- Reset Password Button --}}
+                                            <button type="button"
+                                                x-data
+                                                @click="$dispatch('open-reset-modal', { id: '{{ $user->id }}', name: '{{ $user->name }}' })"
+                                                class="text-amber-600 hover:text-amber-800 transition p-1.5 bg-amber-50 hover:bg-amber-100 rounded-lg"
+                                                title="Reset Password Instan">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/></svg>
+                                            </button>
                                             <a href="{{ route('admin.users.edit', $user) }}"
-                                                class="text-indigo-600 hover:text-indigo-900 transition">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                class="text-indigo-600 hover:text-indigo-900 transition p-1.5 bg-indigo-50 hover:bg-indigo-100 rounded-lg" title="Edit User">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                     viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                         d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -103,8 +111,8 @@
                                             @if (auth()->id() !== $user->id)
                                                 <button type="button"
                                                     @click="$dispatch('open-delete-modal', { id: '{{ $user->id }}', name: '{{ $user->name }}' })"
-                                                    class="text-red-600 hover:text-red-900 transition">
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                    class="text-red-600 hover:text-red-900 transition p-1.5 bg-red-50 hover:bg-red-100 rounded-lg" title="Hapus User">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2"
@@ -214,6 +222,56 @@
                         class="mt-3 w-full inline-flex justify-center rounded-lg border border-slate-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition">
                         Cancel
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Reset Password Modal --}}
+    <div x-data="{
+        show: false,
+        userId: '',
+        userName: '',
+        open(data) {
+            this.userId = data.id;
+            this.userName = data.name;
+            this.show = true;
+        }
+    }" @open-reset-modal.window="open($event.detail)" x-show="show" x-transition class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900/50 transition-opacity" @click="show = false"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full border border-slate-100">
+                <div class="bg-white p-6 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-black text-slate-800 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/></svg>
+                            <span>Reset Password Pengguna</span>
+                        </h3>
+                        <button @click="show = false" class="text-slate-400 hover:text-slate-700">✕</button>
+                    </div>
+
+                    <p class="text-xs text-slate-500">
+                        Atur ulang kata sandi untuk akun <strong class="text-slate-800" x-text="userName"></strong> secara langsung tanpa perlu verifikasi email.
+                    </p>
+
+                    <form x-bind:action="`{{ url('/admin/users') }}/${userId}/reset-password`" method="POST" class="space-y-4">
+                        @csrf
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Password Baru</label>
+                            <input type="password" name="new_password" required minlength="6" placeholder="Masukkan password baru min 6 karakter" class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm font-bold focus:ring-amber-500 focus:border-amber-500">
+                        </div>
+
+                        <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                            <button type="button" @click="show = false" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold text-xs rounded-xl hover:bg-slate-200">
+                                Batal
+                            </button>
+                            <button type="submit" class="px-5 py-2.5 bg-amber-600 text-white font-bold text-xs rounded-xl shadow hover:bg-amber-700 transition-colors flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Simpan Password Baru</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>

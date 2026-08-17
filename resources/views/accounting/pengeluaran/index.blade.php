@@ -50,7 +50,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Jumlah Nominal (Rp)</label>
-                    <input type="number" name="jumlah" min="1" step="100" placeholder="Contoh: 25000" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-bold focus:ring-indomie-red focus:border-indomie-red">
+                    <input type="number" name="jumlah" min="1" step="any" placeholder="Contoh: 250000" required class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-bold focus:ring-indomie-red focus:border-indomie-red">
                 </div>
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Keterangan / Keperluan</label>

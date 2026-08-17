@@ -102,7 +102,7 @@
                                     class="w-full pl-12 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('price') border-red-500 @enderror font-bold"
                                     placeholder="0"
                                     min="0"
-                                    step="100"
+                                    step="any"
                                     required
                                 >
                             </div>
@@ -126,7 +126,7 @@
                                     class="w-full pl-12 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('cost_price') border-red-500 @enderror font-bold"
                                     placeholder="0"
                                     min="0"
-                                    step="100"
+                                    step="any"
                                 >
                             </div>
                             @error('cost_price')
