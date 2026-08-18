@@ -8,7 +8,12 @@
     @if(!$activeShift)
         {{-- Modal Buka Shift (Wajib diisi kasir) --}}
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-100 text-center space-y-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 border border-slate-100 text-center space-y-4 relative overflow-hidden">
+                {{-- Close / Exit to Dashboard Button --}}
+                <a href="{{ route('dashboard') }}" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition p-2 rounded-full hover:bg-slate-100" title="Batal & Kembali ke Dashboard">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </a>
+
                 <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-sm">
                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 0121 9z"/></svg>
                 </div>
@@ -25,10 +30,15 @@
                             <input type="number" name="starting_cash" value="100000" min="0" required class="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-2xl text-lg font-black text-slate-800 focus:ring-blue-500">
                         </div>
                     </div>
-                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-sm rounded-2xl shadow-lg hover:brightness-110 flex items-center justify-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-                        <span>BUKA SHIFT KASIR</span>
-                    </button>
+                    <div class="flex items-center gap-3 pt-1">
+                        <a href="{{ route('dashboard') }}" class="w-1/3 py-3.5 bg-slate-100 text-slate-700 font-bold text-xs rounded-2xl hover:bg-slate-200 text-center transition flex items-center justify-center">
+                            Batal
+                        </a>
+                        <button type="submit" class="w-2/3 py-3.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black text-xs rounded-2xl shadow-lg hover:brightness-110 flex items-center justify-center gap-2 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                            <span>BUKA SHIFT</span>
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>

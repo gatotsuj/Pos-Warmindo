@@ -4,8 +4,10 @@ namespace App\Repositories\Eloquent;
 
 use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
+use App\Support\CurrentTenant;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class ProductRepository extends BaseRepository implements ProductRepositoryInterface
 {
@@ -47,6 +49,18 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
 
     public function getActiveInStock(array $filters = []): Collection
     {
+        if (empty($filters['search']) && empty($filters['category'])) {
+            $tenantId = CurrentTenant::id() ?? 1;
+            $cacheKey = "tenant_{$tenantId}_active_products";
+            return Cache::store('redis')->remember($cacheKey, 600, function () {
+                return $this->model->newQuery()
+                    ->with('category')
+                    ->active()
+                    ->where('stock', '>', 0)
+                    ->get();
+            });
+        }
+
         $query = $this->model->newQuery()
             ->with('category')
             ->active()
@@ -75,5 +89,10 @@ class ProductRepository extends BaseRepository implements ProductRepositoryInter
     public function allOrderedByName(string $direction = 'asc'): Collection
     {
         return $this->model->newQuery()->orderBy('name', $direction)->get();
+    }
+
+    public static function flushCache(int $tenantId): void
+    {
+        Cache::store('redis')->forget("tenant_{$tenantId}_active_products");
     }
 }

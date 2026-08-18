@@ -102,3 +102,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+Route::get('/test-redis', function () {
+    try {
+        // 1. Test Cache Redis
+        \Illuminate\Support\Facades\Cache::store('redis')->put('test_warmindo_key', 'Redis Cache Warmindo Berjalan Super Cepat!', 60);
+        $cacheResult = \Illuminate\Support\Facades\Cache::store('redis')->get('test_warmindo_key');
+
+        // 2. Test Session Redis
+        session(['test_session_warmindo' => 'Session Redis Aktif']);
+
+        // 3. Dispatch Job ke Redis Queue untuk Horizon
+        \App\Jobs\TestWarmindoJob::dispatch('Transaksi Kasir Test Warmindo #' . rand(1000, 9999));
+
+        return response()->json([
+            'status' => 'SUCCESS',
+            'message' => 'Koneksi Redis & Dispatch Job Horizon Berhasil 100%!',
+            'redis_cache_data' => $cacheResult,
+            'redis_session_data' => session('test_session_warmindo'),
+            'dispatched_job' => 'App\Jobs\TestWarmindoJob (Silakan cek di Horizon / Recent Jobs)',
+            'redis_client' => config('database.redis.client'),
+            'cache_driver' => config('cache.default'),
+            'queue_driver' => config('queue.default'),
+            'session_driver' => config('session.driver'),
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'ERROR',
+            'error_message' => $e->getMessage(),
+        ], 500);
+    }
+});
+
+Route::get('/test-pulse-error', function () {
+    throw new \Exception('Test Exception Laravel Pulse Warmindo - Simulasi Error Aplikasi!');
+});
+

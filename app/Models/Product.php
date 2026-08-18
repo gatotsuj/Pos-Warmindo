@@ -166,4 +166,19 @@ class Product extends Model
     {
         return $this->stock <= 0;
     }
+
+    protected static function booted(): void
+    {
+        static::saved(function ($product) {
+            if ($product->tenant_id) {
+                \App\Repositories\Eloquent\ProductRepository::flushCache($product->tenant_id);
+            }
+        });
+
+        static::deleted(function ($product) {
+            if ($product->tenant_id) {
+                \App\Repositories\Eloquent\ProductRepository::flushCache($product->tenant_id);
+            }
+        });
+    }
 }
